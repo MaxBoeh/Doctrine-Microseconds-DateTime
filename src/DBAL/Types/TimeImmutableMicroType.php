@@ -4,49 +4,49 @@ declare(strict_types=1);
 namespace OwlCorp\DoctrineMicrotime\DBAL\Types;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\ConversionException;
+use Doctrine\DBAL\Types\Exception\InvalidFormat;
 use OwlCorp\DoctrineMicrotime\DBAL\Platform\DateTimeFormatTrait;
 
 final class TimeImmutableMicroType extends BaseTimeMicro
 {
     use DateTimeFormatTrait;
 
-    const NAME = 'time_immutable_micro';
+    public const string NAME = 'time_immutable_micro';
 
-    public function convertToDatabaseValue($phpVal, AbstractPlatform $platform)
+    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): mixed
     {
-        if ($phpVal === null) {
-            return $phpVal;
+        if ($value === null) {
+            return $value;
         }
 
-        if ($phpVal instanceof \DateTimeImmutable) {
-            return $phpVal->format($this->getTimeFormatString($platform));
+        if ($value instanceof \DateTimeImmutable) {
+            return $value->format($this->getTimeFormatString($platform));
         }
 
-        throw ConversionException::conversionFailedFormat(
-            $phpVal,
+        throw InvalidFormat::new(
+            $value,
             $this->getName(),
             $this->getTimeFormatString($platform)
         );
     }
 
-    public function convertToPHPValue($dbVal, AbstractPlatform $platform)
+    public function convertToPHPValue(mixed $value, AbstractPlatform $platform): mixed
     {
-        if ($dbVal === null || $dbVal instanceof \DateTimeImmutable) {
-            return $dbVal;
+        if ($value === null || $value instanceof \DateTimeImmutable) {
+            return $value;
         }
 
         //The "!" forces Y-m-d to be set to beginning of unix epoch
-        $phpVal = \DateTimeImmutable::createFromFormat('!' . $this->getTimeFormatString($platform), $dbVal);
+        $phpVal = \DateTimeImmutable::createFromFormat('!' . $this->getTimeFormatString($platform), $value);
         if ($phpVal !== false) {
             return $phpVal;
         }
 
         try {
-            return new \DateTime($dbVal); //it is usually able to guess
+            return new \DateTime($value); //it is usually able to guess
         } catch (\Throwable $t) {
-            throw ConversionException::conversionFailedFormat(
-                $dbVal,
+            throw InvalidFormat::new(
+                $value,
                 $this->getName(),
                 $platform->getDateTimeFormatString()
             );

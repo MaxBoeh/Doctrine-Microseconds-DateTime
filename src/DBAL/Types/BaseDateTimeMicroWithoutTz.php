@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 namespace OwlCorp\DoctrineMicrotime\DBAL\Types;
 
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Platforms\MySqlPlatform;
+use Doctrine\DBAL\Platforms\Exception\NotSupported;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\OraclePlatform;
-use Doctrine\DBAL\Platforms\PostgreSqlPlatform;
-use Doctrine\DBAL\Platforms\SqlitePlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\DBAL\Types\Type;
 use OwlCorp\DoctrineMicrotime\DBAL\Platform\DateTimeFormatTrait;
@@ -17,32 +17,32 @@ abstract class BaseDateTimeMicroWithoutTz extends Type
 {
     use DateTimeFormatTrait;
 
-    const NAME = null;
+    public const string NAME = 'datetime_micro';
 
-    public function getName()
+    public function getName(): string
     {
         return static::NAME;
     }
 
-    public function getSQLDeclaration(array $fieldDeclaration, AbstractPlatform $platform)
+    public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
-        if ($platform instanceof PostgreSqlPlatform) {
+        if ($platform instanceof PostgreSQLPlatform) {
             return 'TIMESTAMP(6) WITHOUT TIME ZONE';
         }
 
-        if ($platform instanceof MySqlPlatform) {
-            return $platform->getDateTimeTypeDeclarationSQL($fieldDeclaration) . '(6)';
+        if ($platform instanceof MySQLPlatform) {
+            return $platform->getDateTimeTypeDeclarationSQL($column) . '(6)';
         }
 
         if ($platform instanceof OraclePlatform) {
             return 'TIMESTAMP(6)';
         }
 
-        if ($platform instanceof SqlitePlatform || $platform instanceof SQLServerPlatform) {
-            return $platform->getDateTimeTypeDeclarationSQL($fieldDeclaration);
+        if ($platform instanceof SQLitePlatform || $platform instanceof SQLServerPlatform) {
+            return $platform->getDateTimeTypeDeclarationSQL($column);
         }
 
-        throw new DBALException(
+        throw new NotSupported(
             \sprintf(
                 '%s ("%s") type is not supported on "%s" platform',
                 $this->getName(),

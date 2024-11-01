@@ -4,45 +4,45 @@ declare(strict_types=1);
 namespace OwlCorp\DoctrineMicrotime\DBAL\Types;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\ConversionException;
+use Doctrine\DBAL\Types\Exception\InvalidFormat;
 
 final class DateTimeImmutableMicroType extends BaseDateTimeMicroWithoutTz
 {
-    const NAME = 'datetime_immutable_micro';
+    public const string NAME = 'datetime_immutable_micro';
 
-    public function convertToDatabaseValue($phpVal, AbstractPlatform $platform)
+    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): mixed
     {
-        if ($phpVal === null) {
-            return $phpVal;
+        if ($value === null) {
+            return $value;
         }
 
-        if ($phpVal instanceof \DateTimeImmutable) {
-            return $phpVal->format($this->getDateTimeFormatString($platform));
+        if ($value instanceof \DateTimeImmutable) {
+            return $value->format($this->getDateTimeFormatString($platform));
         }
 
-        throw ConversionException::conversionFailedFormat(
-            $phpVal,
+        throw InvalidFormat::new(
+            $value,
             $this->getName(),
             $this->getDateTimeFormatString($platform)
         );
     }
 
-    public function convertToPHPValue($dbVal, AbstractPlatform $platform)
+    public function convertToPHPValue(mixed $value, AbstractPlatform $platform): mixed
     {
-        if ($dbVal === null || $dbVal instanceof \DateTimeImmutable) {
-            return $dbVal;
+        if ($value === null || $value instanceof \DateTimeImmutable) {
+            return $value;
         }
 
-        $phpVal = \DateTimeImmutable::createFromFormat($this->getDateTimeFormatString($platform), $dbVal);
+        $phpVal = \DateTimeImmutable::createFromFormat($this->getDateTimeFormatString($platform), $value);
         if ($phpVal !== false) {
             return $phpVal;
         }
 
         try {
-            return new \DateTimeImmutable($dbVal); //it is usually able to guess
+            return new \DateTimeImmutable($value); //it is usually able to guess
         } catch (\Throwable $t) {
-            throw ConversionException::conversionFailedFormat(
-                $dbVal,
+            throw InvalidFormat::new(
+                $value,
                 $this->getName(),
                 $platform->getDateTimeFormatString()
             );

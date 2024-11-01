@@ -4,45 +4,45 @@ declare(strict_types=1);
 namespace OwlCorp\DoctrineMicrotime\DBAL\Types;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\ConversionException;
+use Doctrine\DBAL\Types\Exception\InvalidFormat;
 
 final class DateTimeMicroType extends BaseDateTimeMicroWithoutTz
 {
-    const NAME = 'datetime_micro';
+    public const string NAME = 'datetime_micro';
 
-    public function convertToDatabaseValue($phpVal, AbstractPlatform $platform)
+    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): mixed
     {
-        if ($phpVal === null) {
-            return $phpVal;
+        if ($value === null) {
+            return $value;
         }
 
-        if ($phpVal instanceof \DateTimeInterface) {
-            return $phpVal->format($this->getDateTimeFormatString($platform));
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format($this->getDateTimeFormatString($platform));
         }
 
-        throw ConversionException::conversionFailedFormat(
-            $phpVal,
+        throw InvalidFormat::new(
+            $value,
             $this->getName(),
             $this->getDateTimeFormatString($platform)
         );
     }
 
-    public function convertToPHPValue($dbVal, AbstractPlatform $platform)
+    public function convertToPHPValue(mixed $value, AbstractPlatform $platform): mixed
     {
-        if ($dbVal === null || $dbVal instanceof \DateTimeInterface) {
-            return $dbVal;
+        if ($value === null || $value instanceof \DateTimeInterface) {
+            return $value;
         }
 
-        $phpVal = \DateTime::createFromFormat($this->getDateTimeFormatString($platform), $dbVal);
+        $phpVal = \DateTime::createFromFormat($this->getDateTimeFormatString($platform), $value);
         if ($phpVal !== false) {
             return $phpVal;
         }
 
         try {
-            return new \DateTime($dbVal); //it is usually able to guess
+            return new \DateTime($value); //it is usually able to guess
         } catch (\Throwable $t) {
-            throw ConversionException::conversionFailedFormat(
-                $dbVal,
+            throw InvalidFormat::new(
+                $value,
                 $this->getName(),
                 $platform->getDateTimeFormatString()
             );
